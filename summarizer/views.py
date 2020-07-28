@@ -6,6 +6,8 @@ from summarizer.models import Summary
 from .algorithms.scoring import scoring_algorithm, scoring_nepali
 from .algorithms.frequency import extraction, frequency_nepali, frequency_algorithm
 
+from gensim.summarization.summarizer import summarize
+
 
 def index(request):
     return render(request, 'summarizer/index.html')
@@ -27,7 +29,8 @@ def summarize_page(request):
     if algorithm == '1':
         result_list = scoring_algorithm.scoring_main(long_text, sentence_no)
     elif algorithm == '2':
-        result_list = frequency_algorithm.frequency_main(long_text, sentence_no)
+        result_list = frequency_algorithm.frequency_main(
+            long_text, sentence_no)
 
     summary = ' '.join(result_list)
 
@@ -36,26 +39,33 @@ def summarize_page(request):
 
 
 def summarize_nepali_page(request):
+    # url = request.GET.get('url')
+    # long_text = request.GET.get('long-text')
+    # sentence_no = int(request.GET.get('number'))
+    # algorithm = request.GET.get('algorithm')
+    # result_list = []
+
+    # if url:
+    #     long_text = extraction.extract(url)
+    #     original_text = url
+    # else:
+    #     original_text = long_text
+
+    # if algorithm == '1':
+    #     result_list = scoring_nepali.scoring_main(long_text, sentence_no)
+    # elif algorithm == '2':
+    #     result_list = frequency_nepali.frequency_main_nepali(long_text, sentence_no)
+
+    # summary = ' '.join(result_list)
+
     url = request.GET.get('url')
-    long_text = request.GET.get('long-text')
-    sentence_no = int(request.GET.get('number'))
-    algorithm = request.GET.get('algorithm')
-    result_list = []
+    mytext = request.GET.get('long-text')
 
-    if url:
-        long_text = extraction.extract(url)
-        original_text = url
-    else:
-        original_text = long_text
+    suma = summarize(mytext)
 
-    if algorithm == '1':
-        result_list = scoring_nepali.scoring_main(long_text, sentence_no)
-    elif algorithm == '2':
-        result_list = frequency_nepali.frequency_main_nepali(long_text, sentence_no)
+    context = {'data': suma, 'original_text': mytext}
 
-    summary = ' '.join(result_list)
-
-    context = {'data': summary, 'original_text': original_text}
+    # context = {'data': summary, 'original_text': original_text}
     return render(request, "summarizer/index.html", context)
 
 
@@ -68,7 +78,10 @@ def save_summary(request):
     else:
         heading = topic[:50] + '...'
 
-    summaryTb = Summary(user=request.user, body=summary, original_link=heading, date_created=date.today())
+    summaryTb = Summary(user=request.user,
+                        body=summary,
+                        original_link=heading,
+                        date_created=date.today())
     summaryTb.save()
     context = {'message': 'success'}
     return render(request, "summarizer/index.html", context)
